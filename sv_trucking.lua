@@ -133,7 +133,7 @@ lib.callback.register('randol_trucking:server:spawnTruck', function(source)
 
     if DoesEntityExist(workTruck) then
         local coords = GetEntityCoords(workTruck)
-        return false, coords
+        return false, coords, NetworkGetNetworkIdFromEntity(workTruck)
     end
 
     local model = Server.Trucks[math.random(#Server.Trucks)]

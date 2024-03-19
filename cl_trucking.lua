@@ -1,5 +1,5 @@
 local Config = lib.require('config')
-local DropOffZone, activeTrailer, pickupZone, PICKUP_BLIP, DELIVERY_BLIP, MY_VEH
+local DropOffZone, activeTrailer, pickupZone, PICKUP_BLIP, DELIVERY_BLIP
 local activeRoute = {}
 local droppingOff = false
 local delay = false
@@ -86,7 +86,7 @@ local function nearZone(point)
             showText = true
             lib.showTextUI('**E** - Deliver Trailer', {position = 'left-center'})
         end
-        if next(activeRoute) and cache.vehicle and cache.vehicle == MY_VEH and IsEntityAttachedToEntity(cache.vehicle, activeTrailer) then
+        if next(activeRoute) and cache.vehicle and IsEntityAttachedToEntity(cache.vehicle, activeTrailer) then
             if IsControlJustPressed(0, 38) and not droppingOff then
                 droppingOff = true
                 FreezeEntityPosition(cache.vehicle, true)
@@ -146,7 +146,7 @@ function SetRoute()
         nearby = function()
             DrawMarker(1, activeRoute.pickup.x, activeRoute.pickup.y, activeRoute.pickup.z - 1, 0, 0, 0, 0, 0, 0, 6.0, 6.0, 1.5, 79, 194, 247, 165, 0, 0, 0,0)
             
-            if cache.vehicle and cache.vehicle == MY_VEH and IsEntityAttachedToEntity(cache.vehicle, activeTrailer) and not delay then
+            if cache.vehicle and IsEntityAttachedToEntity(cache.vehicle, activeTrailer) and not delay then
                 delay = true
                 createDropoff()
             end
@@ -243,7 +243,7 @@ end)
 
 RegisterNetEvent('randol_trucking:server:spawnTruck', function(netid)
     if GetInvokingResource() or not netid then return end
-    MY_VEH = lib.waitFor(function()
+    local MY_VEH = lib.waitFor(function()
         if NetworkDoesEntityExistWithNetworkId(netid) then
             return NetToVeh(netid)
         end
