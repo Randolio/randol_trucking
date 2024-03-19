@@ -20,7 +20,7 @@ local function cleanupShit()
     if DoesBlipExist(PICKUP_BLIP) then RemoveBlip(PICKUP_BLIP) end
     if DoesBlipExist(DELIVERY_BLIP) then RemoveBlip(DELIVERY_BLIP) end
 
-    activeTrailer, PICKUP_BLIP, DELIVERY_BLIP, MY_VEH = nil
+    activeTrailer, PICKUP_BLIP, DELIVERY_BLIP = nil
     table.wipe(activeRoute)
     delay = false
     droppingOff = false
