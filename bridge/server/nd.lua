@@ -13,7 +13,7 @@ function DoNotification(src, text, nType)
 end
 
 function GetPlyIdentifier(Player)
-    return Player.identifier
+    return Player.id
 end
 
 function GetCharacterName(Player)
@@ -21,8 +21,13 @@ function GetCharacterName(Player)
 end
 
 function GetSourceFromIdentifier(cid)
-    local Player = NDCore.Functions.GetPlayerByCharacterId(cid)
-    return Player and Player.source or false
+    local players = NDCore:getPlayers()
+    for _, info in pairs(players) do
+        if info.id == cid then
+            return info.source
+        end
+    end
+    return false
 end
 
 function AddItem(Player, item, amount)
