@@ -12,22 +12,22 @@ function DoNotification(src, text, nType)
     TriggerClientEvent('ox_lib:notify', src, { type = nType, description = text })
 end
 
-function GetPlyIdentifier(Player)
-    return Player.id
+function GetPlyIdentifier(player)
+    return player?.id
 end
 
-function GetCharacterName(Player)
-    return Player.fullname
+function GetCharacterName(player)
+    return player.fullname
+end
+
+function GetByIdentifier(cid)
+    local players = NDCore:getPlayers("id", cid, true)
+    return players[1]
 end
 
 function GetSourceFromIdentifier(cid)
-    local players = NDCore:getPlayers()
-    for _, info in pairs(players) do
-        if info.id == cid then
-            return info.source
-        end
-    end
-    return false
+    local players = NDCore:getPlayers("id", cid, true)
+    return players[1]?.source or false
 end
 
 function AddItem(Player, item, amount)
