@@ -16,18 +16,18 @@ function GetPlyIdentifier(player)
     return player?.id
 end
 
-function GetCharacterName(player)
-    return player.fullname
-end
-
-function GetByIdentifier(cid)
-    local players = NDCore:getPlayers("id", cid, true)
-    return players[1]
-end
-
 function GetSourceFromIdentifier(cid)
-    local players = NDCore:getPlayers("id", cid, true)
-    return players[1]?.source or false
+    local players = NDCore:getPlayers()
+    for _, info in pairs(players) do
+        if info.id == cid then
+            return info.source
+        end
+    end
+    return false
+end
+
+function GetCharacterName(Player)
+    return player?.fullname
 end
 
 function AddItem(Player, item, amount)
