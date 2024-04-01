@@ -1,8 +1,6 @@
 if not lib.checkDependency('ND_Core', '2.0.0') then return end
 
-NDCore = {}
-
-lib.load('@ND_Core.init')
+local NDCore = exports["ND_Core"]
 
 RegisterNetEvent('ND:characterUnloaded', function()
     LocalPlayer.state.isLoggedIn = false
@@ -24,9 +22,11 @@ function hasItem(item)
 end
 
 function DoNotification(text, nType)
-    lib.notify({ title = "Notification", description = text, type = nType, })
+    NDCore:notify({ title = "Notification", description = text, type = nType, })
 end
 
 function handleVehicleKeys(veh)
-    -- ?
+    SetTimeout(1000, function()
+        SetVehicleDoorsLocked(veh, 0)
+    end)
 end
