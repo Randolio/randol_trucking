@@ -3,6 +3,7 @@ local Config = lib.require('config')
 local storedRoutes = {}
 local queue = {}
 local spawnedTrailers = {}
+local handlingPayments = {}
 
 local function removeFromQueue(cid)
     for i, cids in ipairs(queue) do
@@ -189,6 +190,8 @@ lib.callback.register('randol_trucking:server:getRoutes', function(source)
 end)
 
 lib.callback.register('randol_trucking:server:updateRoute', function(source, netid, route)
+    if handlingPayments[source] then return false end
+    handlingPayments[source] = true
     local src = source
     local player = GetPlayer(src)
     local cid = GetPlyIdentifier(player)
@@ -197,17 +200,22 @@ lib.callback.register('randol_trucking:server:updateRoute', function(source, net
     local coords = GetEntityCoords(entity)
     local data = storedRoutes[cid]
 
-    if not data or not DoesEntityExist(entity) or #(coords - data.currentRoute.deliver.xyz) > 15.0 or #(pos - data.currentRoute.deliver.xyz) > 15.0 then 
+    if not data or not DoesEntityExist(entity) or #(coords - data.currentRoute.deliver.xyz) > 15.0 or #(pos - data.currentRoute.deliver.xyz) > 15.0 then
+        handlingPayments[src] = nil
         return false 
     end
-
+    
     if spawnedTrailers[src] == entity and route.index == data.currentRoute.index then
-        AddMoney(player, 'cash', data.currentRoute.payment)
-        DoNotification(src, ('You finished the route and received $%s'):format(data.currentRoute.payment), 'success', 7000)
+        local payout = data.currentRoute.payment
         DeleteEntity(entity)
         spawnedTrailers[src] = nil
         data.currentRoute = nil
         table.remove(data.routes, route.index)
+        AddMoney(player, 'cash', payout)
+        DoNotification(src, ('You finished the route and received $%s'):format(payout), 'success', 7000)
+        SetTimeout(2000, function()
+            handlingPayments[src] = nil
+        end)
     end
 end)
 
