@@ -163,13 +163,14 @@ end
 local function spawnPed()
     if DoesEntityExist(truckerPed) then return end
 
-    lib.requestModel(Config.BossModel, 2000)
+    lib.requestModel(Config.BossModel)
     truckerPed = CreatePed(0, Config.BossModel, Config.BossCoords, false, false)
     SetEntityAsMissionEntity(truckerPed, true, true)
     SetPedFleeAttributes(truckerPed, 0, 0)
     SetBlockingOfNonTemporaryEvents(truckerPed, true)
     SetEntityInvincible(truckerPed, true)
     FreezeEntityPosition(truckerPed, true)
+    SetModelAsNoLongerNeeded(Config.BossModel)
 
     exports['qb-target']:AddTargetEntity(truckerPed, { 
         options = {
