@@ -49,7 +49,7 @@ function itemCount(xPlayer, item)
 end
 
 function itemLabel(item)
-    return exports.ox_inventory:Items()[item].label
+    return exports.ox_inventory:Items(item).label
 end
 
 AddEventHandler('esx:playerLogout', function(playerId)
