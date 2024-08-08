@@ -3,6 +3,7 @@ local DropOffZone, activeTrailer, pickupZone, PICKUP_BLIP, DELIVERY_BLIP
 local activeRoute = {}
 local droppingOff = false
 local delay = false
+local oxtarget = GetResourceState('ox_target') == 'started'
 
 local TruckerWork = AddBlipForCoord(Config.BossCoords.x, Config.BossCoords.y, Config.BossCoords.z)
 SetBlipSprite(TruckerWork, 479)
@@ -13,6 +14,22 @@ SetBlipColour(TruckerWork, 56)
 BeginTextCommandSetBlipName('STRING')
 AddTextComponentSubstringPlayerName('Trucking Work')
 EndTextCommandSetBlipName(TruckerWork)
+
+local function targetLocalEntity(entity, options, distance)
+    if oxtarget then
+        for _, option in ipairs(options) do
+            option.distance = distance
+            option.onSelect = option.action
+            option.action = nil
+        end
+        exports.ox_target:addLocalEntity(entity, options)
+    else
+        exports['qb-target']:AddTargetEntity(entity, {
+            options = options,
+            distance = distance
+        })
+    end
+end
 
 local function cleanupShit()
     if DropOffZone then DropOffZone:remove() DropOffZone = nil end
@@ -155,7 +172,11 @@ function SetRoute()
 end
 
 local function removePedSpawned()
-    exports['qb-target']:RemoveTargetEntity(truckerPed, {'Clock In', 'Clock Out', 'View Routes', 'Pull Out Vehicle', 'Abort Route'})
+    if oxtarget then
+        exports.ox_target:removeLocalEntity(truckerPed, {'Clock In', 'Clock Out', 'View Routes', 'Pull Out Vehicle', 'Abort Route'})
+    else
+        exports['qb-target']:RemoveTargetEntity(truckerPed, {'Clock In', 'Clock Out', 'View Routes', 'Pull Out Vehicle', 'Abort Route'})
+    end
     DeleteEntity(truckerPed)
     truckerPed = nil
 end
@@ -171,70 +192,66 @@ local function spawnPed()
     SetEntityInvincible(truckerPed, true)
     FreezeEntityPosition(truckerPed, true)
     SetModelAsNoLongerNeeded(Config.BossModel)
+    targetLocalEntity(truckerPed, {
+        { 
+            num = 1,
+            icon = 'fa-solid fa-clipboard-check',
+            label = 'Clock In',
+            canInteract = function()
+                return not LocalPlayer.state.truckDuty
+            end,
+            action = function()
+                lib.callback.await('randol_trucking:server:clockIn', false)
+            end,
+        },
+        { 
+            num = 2,
+            icon = 'fa-solid fa-clipboard-check',
+            label = 'Clock Out',
+            canInteract = function() return LocalPlayer.state.truckDuty end,
+            action = function()
+                lib.callback.await('randol_trucking:server:clockOut', false)
+            end,
+        },
+        {
+            num = 3,
+            icon = 'fa-solid fa-clipboard-check',
+            label = 'View Routes',
+            canInteract = function() return LocalPlayer.state.truckDuty end,
+            action = function()
+                viewRoutes()
+            end,
+        },
+        {
+            num = 4,
+            icon = 'fa-solid fa-truck',
+            label = 'Pull Out Vehicle',
+            canInteract = function() return LocalPlayer.state.truckDuty end,
+            action = function()
+                if IsAnyVehicleNearPoint(Config.VehicleSpawn.x, Config.VehicleSpawn.y, Config.VehicleSpawn.z, 15.0) then 
+                    return DoNotification('A vehicle is blocking the spawn.', 'error') 
+                end
 
-    exports['qb-target']:AddTargetEntity(truckerPed, { 
-        options = {
-            { 
-                num = 1,
-                icon = 'fa-solid fa-clipboard-check',
-                label = 'Clock In',
-                canInteract = function()
-                    return not LocalPlayer.state.truckDuty
-                end,
-                action = function()
-                    lib.callback.await('randol_trucking:server:clockIn', false)
-                end,
-            },
-            { 
-                num = 2,
-                icon = 'fa-solid fa-clipboard-check',
-                label = 'Clock Out',
-                canInteract = function() return LocalPlayer.state.truckDuty end,
-                action = function()
-                    lib.callback.await('randol_trucking:server:clockOut', false)
-                end,
-            },
-            {
-                num = 3,
-                icon = 'fa-solid fa-clipboard-check',
-                label = 'View Routes',
-                canInteract = function() return LocalPlayer.state.truckDuty end,
-                action = function()
-                    viewRoutes()
-                end,
-            },
-            {
-                num = 4,
-                icon = 'fa-solid fa-truck',
-                label = 'Pull Out Vehicle',
-                canInteract = function() return LocalPlayer.state.truckDuty end,
-                action = function()
-                    if IsAnyVehicleNearPoint(Config.VehicleSpawn.x, Config.VehicleSpawn.y, Config.VehicleSpawn.z, 15.0) then 
-                        return DoNotification('A vehicle is blocking the spawn.', 'error') 
-                    end
-
-                    local success, coords = lib.callback.await('randol_trucking:server:spawnTruck', false)
-                    if not success and coords then
-                        SetNewWaypoint(coords.x, coords.y)
-                        DoNotification('Your work truck is already out. It has been located on your GPS.')
-                    end
-                end,
-            },
-            {
-                num = 5,
-                icon = 'fa-solid fa-xmark',
-                label = 'Abort Route',
-                canInteract = function() return LocalPlayer.state.truckDuty and next(activeRoute) end,
-                action = function()
-                    local success = lib.callback.await('randol_trucking:server:abortRoute', false, activeRoute.index)
-                    if success then
-                        DoNotification('You aborted your current route.', 'error')
-                    end
-                end,
-            },
-        }, 
-        distance = 1.5, 
-    })
+                local success, coords = lib.callback.await('randol_trucking:server:spawnTruck', false)
+                if not success and coords then
+                    SetNewWaypoint(coords.x, coords.y)
+                    DoNotification('Your work truck is already out. It has been located on your GPS.')
+                end
+            end,
+        },
+        {
+            num = 5,
+            icon = 'fa-solid fa-xmark',
+            label = 'Abort Route',
+            canInteract = function() return LocalPlayer.state.truckDuty and next(activeRoute) end,
+            action = function()
+                local success = lib.callback.await('randol_trucking:server:abortRoute', false, activeRoute.index)
+                if success then
+                    DoNotification('You aborted your current route.', 'error')
+                end
+            end,
+        },
+    }, 1.5)
 end
 
 RegisterNetEvent('randol_trucking:client:clearRoutes', function()
