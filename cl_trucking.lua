@@ -3,7 +3,6 @@ local DropOffZone, activeTrailer, pickupZone, PICKUP_BLIP, DELIVERY_BLIP
 local activeRoute = {}
 local droppingOff = false
 local delay = false
-local oxtarget = GetResourceState('ox_target') == 'started'
 
 local TruckerWork = AddBlipForCoord(Config.BossCoords.x, Config.BossCoords.y, Config.BossCoords.z)
 SetBlipSprite(TruckerWork, 479)
@@ -16,7 +15,7 @@ AddTextComponentSubstringPlayerName('Trucking Work')
 EndTextCommandSetBlipName(TruckerWork)
 
 local function targetLocalEntity(entity, options, distance)
-    if oxtarget then
+    if GetResourceState('ox_target') == 'started' then
         for _, option in ipairs(options) do
             option.distance = distance
             option.onSelect = option.action
@@ -172,7 +171,7 @@ function SetRoute()
 end
 
 local function removePedSpawned()
-    if oxtarget then
+    if GetResourceState('ox_target') == 'started' then
         exports.ox_target:removeLocalEntity(truckerPed, {'Clock In', 'Clock Out', 'View Routes', 'Pull Out Vehicle', 'Abort Route'})
     else
         exports['qb-target']:RemoveTargetEntity(truckerPed, {'Clock In', 'Clock Out', 'View Routes', 'Pull Out Vehicle', 'Abort Route'})
